@@ -24,6 +24,8 @@ class Chef
       class Deploy < Chef::Provider::RemoteFile
 
         def initialize(new_resource, run_context)
+          super
+          
           @deploy_resource = new_resource
           @new_resource = Chef::Resource::RemoteFile.new(@deploy_resource.name)
           @new_resource.path ::File.join(@deploy_resource.destination, ::File.basename(@deploy_resource.repository))
@@ -37,6 +39,8 @@ class Chef
           @current_resource = nil
           @run_context = run_context
           @converge_actions = nil
+          @content_class = Chef::Provider::RemoteFile::Content
+          @deployment_strategy ||= Chef::FileContentManagement::Deploy.strategy(false)
         end
 
         def target_revision
@@ -50,7 +54,7 @@ class Chef
         def action_sync
           create_dir_unless_exists(@deploy_resource.destination)
           purge_old_downloads
-          action_create
+         # action_create
         end
 
         private
