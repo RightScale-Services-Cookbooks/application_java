@@ -24,37 +24,26 @@ class Chef
       class Deploy < Chef::Provider::RemoteFile
 
         def initialize(new_resource, run_context)
-          super
-          
           @deploy_resource = new_resource
           @new_resource = Chef::Resource::RemoteFile.new(@deploy_resource.name)
           @new_resource.path ::File.join(@deploy_resource.destination, ::File.basename(@deploy_resource.repository))
           @new_resource.source @deploy_resource.repository
-          unless @deploy_resource.revision == "HEAD"
-            @new_resource.checksum @deploy_resource.revision
-          end
+
           @new_resource.owner @deploy_resource.user
           @new_resource.group @deploy_resource.group
           @action = action
-          @current_resource = nil
-          @run_context = run_context
-          @converge_actions = nil
-          @content_class = Chef::Provider::RemoteFile::Content
-          @deployment_strategy ||= Chef::FileContentManagement::Deploy.strategy(false)
+          super(@new_resource, run_context) if defined?(super)
         end
 
         def target_revision
-          unless @new_resource.checksum
-            action_sync
-          end
-          @target_revision ||= @new_resource.checksum
+          action_sync
         end
         alias :revision_slug :target_revision
 
         def action_sync
           create_dir_unless_exists(@deploy_resource.destination)
           purge_old_downloads
-         # action_create
+          action_create
         end
 
         private
@@ -85,8 +74,10 @@ class Chef
         def purge_old_downloads
           converge_by("purge old downloads") do
             Dir.glob( "#{@deploy_resource.destination}/*" ).each do |direntry|
-              FileUtils.rm_rf( direntry ) unless direntry == @new_resource.path
-              Chef::Log.info("#{@new_resource} purged old download #{direntry}")
+              unless direntry == @new_resource.path
+                FileUtils.rm_rf( direntry )
+                Chef::Log.info("#{@new_resource} purged old download #{direntry}")
+              end
             end
           end
         end
