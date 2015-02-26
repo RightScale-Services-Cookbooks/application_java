@@ -43,7 +43,7 @@ action :before_deploy do
     not_if "test -L #{node['tomcat']['context_dir']}/ROOT.xml"
   end
    
-  link "#{node['tomcat']['config_dir']}/#{new_resource.application.name}.xml" do
+  link "#{node['tomcat']['context_dir']}/#{new_resource.application.name}.xml" do
     to "#{new_resource.application.path}/shared/#{new_resource.application.name}.xml"
     notifies :restart, resources(:service => "tomcat#{node['tomcat']['base_version']}")
   end
